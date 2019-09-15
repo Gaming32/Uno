@@ -1,6 +1,5 @@
-# import random
-import numpy.random as random
-import math
+import numpy.random as nrandom
+import math, random
 _ordinal = (lambda n: "%d%s" % (n,"tsnrhtdd"[(math.floor(n/10)%10!=1)*(n%10<4)*n%10::4]))
 
 class Color:
@@ -50,7 +49,7 @@ class Player:
                 return do()
             else:
                 print("%s still couldn't play and had to be skipped" % self.name)
-                return current_card
+                return None
     def _play(self, current_card):
         for card in self.hand:
             if self.can_play_card(current_card, card):
@@ -94,15 +93,15 @@ class RealPlayer(Player):
         return card
 
 def draw(count):
-    hand = random.choice(CARD_LIST, count, False, WEIGHT_LIST)
+    hand = nrandom.choice(CARD_LIST, count, False, WEIGHT_LIST)
     return list(hand)
 
 class Game:
     def __init__(self, players):
         self.players = players
-        self.player = players[0]
+        self.ix = random.randrange(len(self.players))
+        self.player = players[self.ix]
         self.card = draw(1)[0]
-        self.ix = 0
         self.direction = 1
     def next_player(self):
         self.ix = (self.ix + self.direction) % len(self.players)
@@ -110,7 +109,8 @@ class Game:
     def begin(self):
         while True:
             card = self.player.play(self.card)
-            if card.number == self.card.number or card.color == self.card.color:
+            if card is None: continue
+            elif card.number == self.card.number or card.color == self.card.color:
                 self.card = card
                 if card in self.player.hand:
                     self.player.hand.remove(card)
@@ -132,6 +132,26 @@ class Skip(Card):
         print("%s has been skipped"
         % game.players[game.ix%len(game.players)].name)
         # % game.players[(game.ix+1)%len(game.players)].name)
+class Reverse(Card):
+    def __init__(self, long_name, color):
+        super().__init__(long_name, 'R', color, 'r', 2, 20)
+    def played(self, game):
+        if len(game.players) < 3:
+            game.ix += 1
+            print("%s has been skipped"
+            % game.players[game.ix%len(game.players)].name)
+        else:
+            game.direction = -game.direction
+            print("%s has reversed the direction" % game.player.name)
+class Draw2(Card):
+    def __init__(self, long_name, color):
+        super().__init__(long_name, 'D2', color, 'd2', 2, 20)
+    def played(self, game):
+        game.ix += 1
+        print("%s forced %s to draw two cards"
+        % (game.player.name,
+        game.players[game.ix%len(game.players)].name))
+        game.players[game.ix%len(game.players)].draw(2)
 
 RED = Color('r', 1)
 GREEN = Color('g', 2)
@@ -152,6 +172,11 @@ for color in ('red', 'green', 'blue', 'yellow'):
     exec("%s_SKIP = Skip('%s Skip', %s)" % (color.upper(), color.capitalize(), color.upper()))
     CARD_SET.add(eval('%s_SKIP' % color.upper()))
 
+    exec("%s_REVERSE = Reverse('%s Reverse', %s)" % (color.upper(), color.capitalize(), color.upper()))
+    CARD_SET.add(eval('%s_REVERSE' % color.upper()))
+
+    exec("%s_DRAW2 = Draw2('%s Draw 2', %s)" % (color.upper(), color.capitalize(), color.upper()))
+    CARD_SET.add(eval('%s_DRAW2' % color.upper()))
 
 def calculate_chance():
     weight_total = 0
@@ -166,10 +191,8 @@ def calculate_chance():
 CARD_LIST, WEIGHT_LIST = calculate_chance()
 
 if __name__ == '__main__':
-    game = Game([Player(), RealPlayer()])
-    # class Multiplayer(Game):
-    #     def next_player(self):
-    #         print('\u001b[2J', end='')
-    #         Game.next_player(self)
-    # game = Multiplayer([RealPlayer(), RealPlayer])
+    # game = Game([Player(), RealPlayer()])
+    p2 = Player()
+    p2.name = 'Player2'
+    game = Game([Player(), RealPlayer(), p2])
     game.begin()
