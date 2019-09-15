@@ -1,5 +1,5 @@
 import numpy.random as nrandom
-import math, random
+import math, random, socket, pickle
 _ordinal = (lambda n: "%d%s" % (n,"tsnrhtdd"[(math.floor(n/10)%10!=1)*(n%10<4)*n%10::4]))
 
 class Color:
@@ -92,6 +92,44 @@ class RealPlayer(Player):
             if str(card.number) == desired_number: break
         return card
 
+class Network:
+    def __init__(self):
+        self.sock1 = socket.socket()
+        self.sock2 = socket.socket()
+    def send_receive(self, cmd):
+        self.send(cmd)
+        return self.receive()
+    def send(self, cmd):
+        self.sock1.send(b'\x00' + cmd.encode())
+    def receive(self):
+        data = self.sock1.recv(2049)
+        if data[0] == b'\x01':
+            return pickle.loads(data[1:])
+    def poll_event(self):
+        data = self.sock1.recv(2049)
+        if data[0] == b'\x00':
+            self.sock1.send(b'\x01' + pickle.dumps(eval('self.self.'+data[1:])))
+class NetworkWrapper(Network):
+    def __init__(self, host, player):
+        super().__init__()
+        self.sock1.connect((host, 4000))
+        self.sock2.connect((host, 4001))
+        self.player = player
+class NetworkPlayer(Player, Network):
+    def __init__(self):
+        Network.__init__(self)
+        self.sock1.bind(('', 4000))
+        self.sock2.bind(('', 4001))
+        self.sock1.listen(0)
+        self.sock1, addr1 = self.sock1.accept()
+        self.sock2.listen(0)
+        while True:
+            sock2, addr2 = self.sock2.accept()
+            if addr2[0] == addr1[0]: break
+        self.sock2 = sock2
+        # self.wrapper = 
+        Player.__init__(self, self.send_receive('player.card_count'))
+
 def draw(count):
     hand = nrandom.choice(CARD_LIST, count, False, WEIGHT_LIST)
     return list(hand)
@@ -109,7 +147,7 @@ class Game:
     def begin(self):
         while True:
             card = self.player.play(self.card)
-            if card is None: continue
+            if card is None: self.next_player()
             elif card.number == self.card.number or card.color == self.card.color:
                 self.card = card
                 if card in self.player.hand:
