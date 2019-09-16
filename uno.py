@@ -1,5 +1,5 @@
 import numpy.random as nrandom
-import math, random, socket, pickle
+import math, random, socket, pickle, time, _thread
 _ordinal = (lambda n: "%d%s" % (n,"tsnrhtdd"[(math.floor(n/10)%10!=1)*(n%10<4)*n%10::4]))
 
 class Color:
@@ -55,6 +55,8 @@ class Player:
             if self.can_play_card(current_card, card):
                 return card
         # return self.hand[random.randint(0, len(self.hand)-1)]
+    def end(self): pass
+    def doprint(self, *vals): pass
     def can_play_card(self, current_card, card):
         return card.number == current_card.number or card.color == current_card.color
     def can_play(self, current_card):
@@ -67,8 +69,8 @@ class RealPlayer(Player):
         super().__init__(card_count)
         self.name = input('What is your name? ')
     def _play(self, current_card):
-        print('Current card:', current_card)
-        print(*self.hand)
+        self.doprint('Current card:', current_card)
+        self.doprint(*self.hand)
         hand_colors = {}
         for card in self.hand:
             if card.color.name not in hand_colors:
@@ -78,7 +80,7 @@ class RealPlayer(Player):
         while not desired_color or desired_color.lower()[0] not in hand_colors:
             desired_color = input('What color do you want to play? ')
         desired_color = desired_color.lower()[0]
-        print(*hand_colors[desired_color])
+        self.doprint(*hand_colors[desired_color])
         color_numbers = []
         for card in hand_colors[desired_color]:
             color_numbers.append(str(card.number))
@@ -91,44 +93,82 @@ class RealPlayer(Player):
         for card in hand_colors[desired_color]:
             if str(card.number) == desired_number: break
         return card
+    def doprint(self, *vals): print(*vals)
 
 class Network:
     def __init__(self):
         self.sock1 = socket.socket()
         self.sock2 = socket.socket()
+        self._ended = False
     def send_receive(self, cmd):
         self.send(cmd)
         return self.receive()
     def send(self, cmd):
         self.sock1.send(b'\x00' + cmd.encode())
     def receive(self):
-        data = self.sock1.recv(2049)
-        if data[0] == b'\x01':
-            return pickle.loads(data[1:])
+        testdata = self.sock1.recv(1)
+        while not len(testdata):
+            testdata = self.sock1.recv(1)
+            time.sleep(1)
+        datafinal = self.sock1.recv(2048)
+        data = bytes(datafinal)
+        if testdata == b'\x01':
+            return pickle.loads(data)
     def poll_event(self):
-        data = self.sock1.recv(2049)
-        if data[0] == b'\x00':
-            self.sock1.send(b'\x01' + pickle.dumps(eval('self.self.'+data[1:])))
+        testdata = self.sock1.recv(1)
+        while not len(testdata):
+            # print(testdata)
+            testdata = self.sock1.recv(1)
+            time.sleep(1)
+        datafinal = self.sock1.recv(2048)
+        data = bytes(datafinal)
+        if testdata == b'\x00':
+            self.sock1.send(b'\x01' + pickle.dumps(eval('self.player.'+data.decode())))
+    def poll_events(self, n=math.inf):
+        i = 0
+        while i < n:
+            # print(i)
+            self.poll_event()
+            if self._ended: break
+            i += 1
+    def poll_events_forever(self):
+        _thread.start_new_thread(self.poll_events, ())
 class NetworkWrapper(Network):
     def __init__(self, host, player):
         super().__init__()
         self.sock1.connect((host, 4000))
-        self.sock2.connect((host, 4001))
+        # self.sock2.connect((host, 4001))
         self.player = player
-class NetworkPlayer(Player, Network):
+        # self.other = NetworkPlayer.from_socket(self.sock2)
+    @staticmethod
+    def from_socket(sock, player):
+        self = NetworkWrapper.__new__(NetworkPlayer)
+        self.sock1 = sock
+        self.player = player
+        return self
+class NetworkPlayer(Network):
+    # def __init__(self, player_this_side):
     def __init__(self):
         Network.__init__(self)
         self.sock1.bind(('', 4000))
-        self.sock2.bind(('', 4001))
+        # self.sock2.bind(('', 4001))
         self.sock1.listen(0)
         self.sock1, addr1 = self.sock1.accept()
-        self.sock2.listen(0)
-        while True:
-            sock2, addr2 = self.sock2.accept()
-            if addr2[0] == addr1[0]: break
-        self.sock2 = sock2
-        # self.wrapper = 
-        Player.__init__(self, self.send_receive('player.card_count'))
+        # self.sock2.listen(0)
+        # while True:
+        #     sock2, addr2 = self.sock2.accept()
+        #     if addr2[0] == addr1[0]: break
+        # self.sock2 = sock2
+        # self.other = NetworkWrapper.from_socket(self.sock2, player_this_side)
+    @staticmethod
+    def from_socket(sock):
+        self = NetworkPlayer.__new__(NetworkPlayer)
+        self.sock1 = sock
+        return self
+    def __getattr__(self, attr):
+        return self.send_receive(attr)
+    def end(self):
+        self._ended = True
 
 def draw(count):
     hand = nrandom.choice(CARD_LIST, count, False, WEIGHT_LIST)
@@ -144,6 +184,12 @@ class Game:
     def next_player(self):
         self.ix = (self.ix + self.direction) % len(self.players)
         self.player = self.players[self.ix]
+    def display_message(self, *vals):
+        for player in self.players:
+            player.doprint(*vals)
+    def game_over(self):
+        for player in self.players:
+            player.end()
     def begin(self):
         while True:
             card = self.player.play(self.card)
@@ -158,9 +204,9 @@ class Game:
         player_scores = self.players[:]
         player_scores.sort(key=(lambda x: x.score()), reverse=True)
         for (i, player) in enumerate(player_scores[:-1]):
-            print(player.name, 'came in', _ordinal(len(self.players)-i),
+            self.display_message(player.name, 'came in', _ordinal(len(self.players)-i),
             'place with', player.score(), 'points.')
-        print(self.player.name, 'wins!')
+        self.display_message(self.player.name, 'wins!')
 
 class Skip(Card):
     def __init__(self, long_name, color):
@@ -229,8 +275,59 @@ def calculate_chance():
 CARD_LIST, WEIGHT_LIST = calculate_chance()
 
 if __name__ == '__main__':
+    def get_number(value):
+        try: value = int(value)
+        except ValueError:
+            print('Please enter a number.')
+            return
+        else: return value
+    def play_game():
+        player_list = []
+
+        value = get_number(input('How many Players would you like? '))
+        while value is None:
+            value = get_number(input('How many Players would you like? '))
+        for _ in range(value):
+            player_list.append(Player())
+
+        value = get_number(input('How many RealPlayers would you like? '))
+        while value is None:
+            value = get_number(input('How many RealPlayers would you like? '))
+        for _ in range(value):
+            player_list.append(RealPlayer())
+
+        value = get_number(input('How many NetworkPlayers would you like? '))
+        while value is None:
+            value = get_number(input('How many NetworkPlayers would you like? '))
+        for _ in range(value):
+            player_list.append(NetworkPlayer())
+
+        game = Game(player_list)
+        game.begin()
+    def join_game():
+        player = RealPlayer()
+        while True:
+            host = input('Hostname/IP of the game to join: ')
+            try: wrapper = NetworkWrapper(host, player)
+            except socket.error:
+                print('Unable to connect to game')
+                continue
+            else: break
+        wrapper.poll_events()
+    while True:
+        print('Main Menu\t0:Play Game\t1:Join Network Game\t2:Quit')
+        value = input('Which option: ')
+        value = get_number(value)
+        if value == 2:
+            print('Goodbye.')
+            exit()
+        elif value == 0: play_game()
+        elif value == 1: join_game()
+        elif value is None: continue
+        else: print('Invalid option: %s' % value)
+
     # game = Game([Player(), RealPlayer()])
-    p2 = Player()
-    p2.name = 'Player2'
-    game = Game([Player(), RealPlayer(), p2])
-    game.begin()
+    # p2 = Player()
+    # p2.name = 'Player2'
+    # game = Game([Player(), RealPlayer(), p2])
+    # game.begin()
