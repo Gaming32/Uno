@@ -28,6 +28,8 @@ class Player:
         self.name = 'Player'
     def draw(self, count):
         self.hand.extend(draw(count))
+    def remove_from_hand(self, card):
+        self.hand.remove(card)
     def score(self):
         score = 0
         for card in self.hand:
@@ -166,7 +168,25 @@ class NetworkPlayer(Network):
         self.sock1 = sock
         return self
     def __getattr__(self, attr):
-        return self.send_receive(attr)
+        value = self.send_receive(attr)
+        if callable(value):
+            def do_call(*args, **kwargs):
+                nonlocal attr
+                arglist = []
+                for arg in args:
+                    if isinstance(arg, Card):
+                        arglist.append(get_card_name(arg))
+                    else:
+                        arglist.append(repr(arg))
+                argstr = ','.join(arglist)
+                kwarglist = []
+                for arg in kwargs.items():
+                    kwarglist.append('='.join(arg))
+                kwargstr = ','.join(kwarglist)
+                comma = ',' * bool(argstr and kwargstr)
+                return self.send_receive('%s(%s%s%s)' % (attr, argstr, comma, kwargstr))
+            return do_call
+        else: return value
     def end(self):
         self._ended = True
 
@@ -197,7 +217,7 @@ class Game:
             elif card.number == self.card.number or card.color == self.card.color:
                 self.card = card
                 if card in self.player.hand:
-                    self.player.hand.remove(card)
+                    self.player.remove_from_hand(card)
                 if not len(self.player.hand): break
                 card.played(self)
                 self.next_player()
@@ -273,6 +293,9 @@ def calculate_chance():
         chances.append(card.weight / weight_total)
     return cards, chances
 CARD_LIST, WEIGHT_LIST = calculate_chance()
+
+def get_card_name(card):
+    return card.long_name.upper().replace(' ', '_')
 
 if __name__ == '__main__':
     def get_number(value):
