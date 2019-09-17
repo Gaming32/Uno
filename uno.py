@@ -35,22 +35,22 @@ class Player:
         for card in self.hand:
             score += card.points
         return score
-    def play(self, current_card):
+    def play(self, current_card, game):
         def do():
             while True:
                 card = self._play(current_card)
                 if self.can_play_card(current_card, card):
-                    print("%s has %i cards" % (self.name, len(self.hand)-1))
+                    game.display_message("%s has %i cards" % (self.name, len(self.hand)-1))
                     return card
         if self.can_play(current_card):
             return do()
         else:
-            print("%s couldn't play and had to draw a card" % self.name)
+            game.display_message("%s couldn't play and had to draw a card" % self.name)
             self.draw(1)
             if self.can_play(current_card):
                 return do()
             else:
-                print("%s still couldn't play and had to be skipped" % self.name)
+                game.display_message("%s still couldn't play and had to be skipped" % self.name)
                 return None
     def _play(self, current_card):
         for card in self.hand:
@@ -96,17 +96,36 @@ class RealPlayer(Player):
             if str(card.number) == desired_number: break
         return card
     def doprint(self, *vals): print(*vals)
+class ComputerPlayer(Player):
+    NAMES = [
+        'Hal',
+        'Cortana',
+        'Alexa',
+        'Bixby'
+    ]
+    def __init__(self, card_count=7):
+        super().__init__(card_count)
+        self.name = random.choice(self.NAMES)
+    def _play(self, current_card):
+        self.hand.sort(key=(lambda x: x.points), reverse=True)
+        for card in self.hand:
+            if self.can_play_card(current_card, card):
+                return card
 
 class Network:
     def __init__(self):
         self.sock1 = socket.socket()
-        self.sock2 = socket.socket()
+        # self.sock2 = socket.socket()
         self._ended = False
     def send_receive(self, cmd):
         self.send(cmd)
         return self.receive()
     def send(self, cmd):
+        print(b'\x00' + cmd.encode())
         self.sock1.send(b'\x00' + cmd.encode())
+    def set_value(self, *value):
+        print(b'\x01'+pickle.dumps(value))
+        self.sock1.send(b'\x01'+pickle.dumps(value))
     def receive(self):
         testdata = self.sock1.recv(1)
         while not len(testdata):
@@ -114,6 +133,7 @@ class Network:
             time.sleep(1)
         datafinal = self.sock1.recv(2048)
         data = bytes(datafinal)
+        print(data)
         if testdata == b'\x01':
             return pickle.loads(data)
     def poll_event(self):
@@ -126,6 +146,9 @@ class Network:
         data = bytes(datafinal)
         if testdata == b'\x00':
             self.sock1.send(b'\x01' + pickle.dumps(eval('self.player.'+data.decode())))
+        elif testdata == b'\x02':
+            data = pickle.loads(data)
+            setattr(self, data[0], data[1])
     def poll_events(self, n=math.inf):
         i = 0
         while i < n:
@@ -176,6 +199,8 @@ class NetworkPlayer(Network):
                 for arg in args:
                     if isinstance(arg, Card):
                         arglist.append(get_card_name(arg))
+                    elif isinstance(arg, Game):
+                        arglist.append('self.send_receive')
                     else:
                         arglist.append(repr(arg))
                 argstr = ','.join(arglist)
@@ -212,7 +237,7 @@ class Game:
             player.end()
     def begin(self):
         while True:
-            card = self.player.play(self.card)
+            card = self.player.play(self.card, self)
             if card is None: self.next_player()
             elif card.number == self.card.number or card.color == self.card.color:
                 self.card = card
@@ -233,7 +258,7 @@ class Skip(Card):
         super().__init__(long_name, 'S', color, 's', 2, 20)
     def played(self, game):
         game.ix += 1
-        print("%s has been skipped"
+        game.display_message("%s has been skipped"
         % game.players[game.ix%len(game.players)].name)
         # % game.players[(game.ix+1)%len(game.players)].name)
 class Reverse(Card):
@@ -242,11 +267,11 @@ class Reverse(Card):
     def played(self, game):
         if len(game.players) < 3:
             game.ix += 1
-            print("%s has been skipped"
+            game.display_message("%s has been skipped"
             % game.players[game.ix%len(game.players)].name)
         else:
             game.direction = -game.direction
-            print("%s has reversed the direction" % game.player.name)
+            game.display_message("%s has reversed the direction" % game.player.name)
 class Draw2(Card):
     def __init__(self, long_name, color):
         super().__init__(long_name, 'D2', color, 'd2', 2, 20)
@@ -307,11 +332,11 @@ if __name__ == '__main__':
     def play_game():
         player_list = []
 
-        value = get_number(input('How many Players would you like? '))
+        value = get_number(input('How many ComputerPlayers would you like? '))
         while value is None:
-            value = get_number(input('How many Players would you like? '))
+            value = get_number(input('How many ComputerPlayers would you like? '))
         for _ in range(value):
-            player_list.append(Player())
+            player_list.append(ComputerPlayer())
 
         value = get_number(input('How many RealPlayers would you like? '))
         while value is None:
