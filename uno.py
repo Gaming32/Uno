@@ -1,5 +1,5 @@
 import numpy.random as nrandom
-import math, random, socket, pickle, time, _thread
+import math, random, socket, pickle, time, _thread, string
 _ordinal = (lambda n: "%d%s" % (n,"tsnrhtdd"[(math.floor(n/10)%10!=1)*(n%10<4)*n%10::4]))
 
 class Color:
@@ -101,7 +101,8 @@ class ComputerPlayer(Player):
         'Hal',
         'Cortana',
         'Alexa',
-        'Bixby'
+        'Bixby',
+        'Siri'
     ]
     def __init__(self, card_count=7):
         super().__init__(card_count)
@@ -124,8 +125,8 @@ class Network:
         print(b'\x00' + cmd.encode())
         self.sock1.send(b'\x00' + cmd.encode())
     def set_value(self, *value):
-        print(b'\x01'+pickle.dumps(value))
-        self.sock1.send(b'\x01'+pickle.dumps(value))
+        print(b'\x02'+pickle.dumps(value))
+        self.sock1.send(b'\x02'+pickle.dumps(value))
     def receive(self):
         testdata = self.sock1.recv(1)
         while not len(testdata):
@@ -145,11 +146,12 @@ class Network:
         datafinal = self.sock1.recv(2048)
         data = bytes(datafinal)
         if testdata == b'\x00':
-            self.sock1.send(b'\x01' + pickle.dumps(eval('self.player.'+data.decode())))
+            self.sock1.send(b'\x01' + pickle.dumps(eval('self.'+data.decode())))
         elif testdata == b'\x02':
             data = pickle.loads(data)
             setattr(self, data[0], data[1])
     def poll_events(self, n=math.inf):
+        self._ended = False
         i = 0
         while i < n:
             # print(i)
@@ -171,6 +173,12 @@ class NetworkWrapper(Network):
         self.sock1 = sock
         self.player = player
         return self
+    def play(self, current_card, game:type(None)):
+        class TempGame:
+            def display_message(self_, *vals):
+                value = self.send_receive('_display_messge(%s)' %
+                ','.join(repr(x) for x in vals))
+        self.player.play(current_card, TempGame())
 class NetworkPlayer(Network):
     # def __init__(self, player_this_side):
     def __init__(self):
@@ -179,6 +187,7 @@ class NetworkPlayer(Network):
         # self.sock2.bind(('', 4001))
         self.sock1.listen(0)
         self.sock1, addr1 = self.sock1.accept()
+        self._game = None
         # self.sock2.listen(0)
         # while True:
         #     sock2, addr2 = self.sock2.accept()
@@ -191,6 +200,7 @@ class NetworkPlayer(Network):
         self.sock1 = sock
         return self
     def __getattr__(self, attr):
+        attr = 'player.' + attr
         value = self.send_receive(attr)
         if callable(value):
             def do_call(*args, **kwargs):
@@ -199,8 +209,6 @@ class NetworkPlayer(Network):
                 for arg in args:
                     if isinstance(arg, Card):
                         arglist.append(get_card_name(arg))
-                    elif isinstance(arg, Game):
-                        arglist.append('self.send_receive')
                     else:
                         arglist.append(repr(arg))
                 argstr = ','.join(arglist)
@@ -214,6 +222,14 @@ class NetworkPlayer(Network):
         else: return value
     def end(self):
         self._ended = True
+    def play(self, current_card, game):
+        self._game = game
+        self.poll_events_forever()
+        value = self.send_receive('play(%s, None)' % get_card_name(current_card))
+        self.end()
+        return value
+    def _display_message(self, *vals):
+        self._game.display_message(*vals)
 
 def draw(count):
     hand = nrandom.choice(CARD_LIST, count, False, WEIGHT_LIST)
@@ -320,7 +336,18 @@ def calculate_chance():
 CARD_LIST, WEIGHT_LIST = calculate_chance()
 
 def get_card_name(card):
-    return card.long_name.upper().replace(' ', '_')
+    value = card.long_name.upper().replace(' ', '_')
+    prevchar = ''
+    newval = ''
+    reached__ = False
+    for char in value:
+        if reached__ and prevchar == '_' and char in string.digits:
+            newval = newval[:-1]
+        if prevchar == '_' and not reached__:
+            reached__ = True
+        newval += char
+        prevchar = char
+    return newval
 
 if __name__ == '__main__':
     def get_number(value):
