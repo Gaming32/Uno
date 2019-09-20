@@ -122,7 +122,7 @@ class Network:
         self.send(cmd)
         return self.receive()
     def send(self, cmd):
-        print(b'\x00' + cmd.encode())
+        print('sent', b'\x00' + cmd.encode())
         self.sock1.send(b'\x00' + cmd.encode())
     def set_value(self, *value):
         print(b'\x02'+pickle.dumps(value))
@@ -134,7 +134,7 @@ class Network:
             time.sleep(1)
         datafinal = self.sock1.recv(2048)
         data = bytes(datafinal)
-        print(data)
+        print('received', testdata + data)
         if testdata == b'\x01':
             return pickle.loads(data)
     def poll_event(self):
@@ -145,7 +145,9 @@ class Network:
             time.sleep(1)
         datafinal = self.sock1.recv(2048)
         data = bytes(datafinal)
+        print('poll received', testdata + data)
         if testdata == b'\x00':
+            print('poll sent', b'\x01' + pickle.dumps(eval('self.'+data.decode())))
             self.sock1.send(b'\x01' + pickle.dumps(eval('self.'+data.decode())))
         elif testdata == b'\x02':
             data = pickle.loads(data)
