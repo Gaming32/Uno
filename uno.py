@@ -1,9 +1,10 @@
 import numpy.random as nrandom
-import math, random, socket, pickle, time, _thread, string
+import math, random, socket, pickle, time, _thread, string, copy
 _ordinal = (lambda n: "%d%s" % (n,"tsnrhtdd"[(math.floor(n/10)%10!=1)*(n%10<4)*n%10::4]))
 
 class Color:
-    def __init__(self, name, ansi):
+    def __init__(self, code, name, ansi):
+        self.code = code
         self.name = name
         self.ansi = '3' + str(ansi)
 
@@ -57,10 +58,32 @@ class Player:
             if self.can_play_card(current_card, card):
                 return card
         # return self.hand[random.randint(0, len(self.hand)-1)]
+    def ask(self, q, t=str, limits=()):
+        while True:
+            value = self._ask(q, t)
+            value, valid = self._validate_ask(value, t, limits)
+            if valid: return value
+    def _ask(self, q, t):
+        if issubclass(t, Color):
+            return random.choice(COLOR_SET)
+        elif issubclass(t, str):
+            return random.choice(string.printable)
+    def _validate_ask(self, v, t, limits):
+        ret = ()
+        if isinstance(v, t): ret = v, True
+        elif issubclass(t, Color):
+            for color in COLOR_SET:
+                if color.code == str(v[0]):
+                    ret = color, True
+        else: ret = v, False
+        if ret[0] in limits: return ret[0], False
+        else: return ret
     def end(self): pass
     def doprint(self, *vals): pass
     def can_play_card(self, current_card, card):
-        return card.number == current_card.number or card.color == current_card.color
+        return (card.color == WILD or
+        card.number == current_card.number or
+        card.color == current_card.color)
     def can_play(self, current_card):
         for card in self.hand:
             if self.can_play_card(current_card, card):
@@ -75,9 +98,9 @@ class RealPlayer(Player):
         self.doprint(*self.hand)
         hand_colors = {}
         for card in self.hand:
-            if card.color.name not in hand_colors:
-                hand_colors[card.color.name] = []
-            hand_colors[card.color.name].append(card)
+            if card.color.code not in hand_colors:
+                hand_colors[card.color.code] = []
+            hand_colors[card.color.code].append(card)
         desired_color = '!'
         while not desired_color or desired_color.lower()[0] not in hand_colors:
             desired_color = input('What color do you want to play? ')
@@ -95,6 +118,8 @@ class RealPlayer(Player):
         for card in hand_colors[desired_color]:
             if str(card.number) == desired_number: break
         return card
+    def _ask(self, q, t):
+        return input(q)
     def doprint(self, *vals): print(*vals)
 class ComputerPlayer(Player):
     NAMES = [
@@ -257,7 +282,7 @@ class Game:
         while True:
             card = self.player.play(self.card, self)
             if card is None: self.next_player()
-            elif card.number == self.card.number or card.color == self.card.color:
+            else:
                 self.card = card
                 if card in self.player.hand:
                     self.player.remove_from_hand(card)
@@ -300,12 +325,33 @@ class Draw2(Card):
         game.players[game.ix%len(game.players)].name))
         game.players[game.ix%len(game.players)].draw(2)
 
-RED = Color('r', 1)
-GREEN = Color('g', 2)
-BLUE = Color('b', 4)
-YELLOW = Color('y', 3)
+class Wild(Card):
+    def __init__(self, long_name='Wild', short_name='W', number='w'):
+        super().__init__(long_name, short_name, WILD, number, 4, 50)
+    def played(self, game:Game):
+        game.card = copy.copy(self)
+        game.card.color = game.player.ask(
+            'What color would you like to change the color to? ', Color, limits=(WILD,))
+        print('%s changed the color to %s.' % (game.player.name, game.card.color.name))
+class WildDraw4(Wild):
+    def __init__(self):
+        super().__init__('Wild Draw 4', 'D4', 'd4')
+    def played(self, game):
+        super().played(game)
+        game.ix += 1
+        print("%s forced %s to draw four cards"
+        % (game.player.name,
+        game.players[game.ix%len(game.players)].name))
+        game.players[game.ix%len(game.players)].draw(4)
+
+RED = Color('r', 'red', 1)
+GREEN = Color('g', 'green', 2)
+BLUE = Color('b', 'blue', 4)
+YELLOW = Color('y', 'yellow', 3)
+WILD = Color('w', 'wild', 5)
 
 CARD_SET = set()
+COLOR_SET = {RED, GREEN, BLUE, YELLOW, WILD}
 
 for color in ('red', 'green', 'blue', 'yellow'):
     for number in range(1, 10):
@@ -324,6 +370,8 @@ for color in ('red', 'green', 'blue', 'yellow'):
 
     exec("%s_DRAW2 = Draw2('%s Draw 2', %s)" % (color.upper(), color.capitalize(), color.upper()))
     CARD_SET.add(eval('%s_DRAW2' % color.upper()))
+WILD_CARD = Wild()
+WILD_DRAW4 = WildDraw4()
 
 def calculate_chance():
     weight_total = 0
