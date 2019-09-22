@@ -3,14 +3,14 @@
 block_cipher = None
 
 
-a = Analysis(['uno.py'],
+a = Analysis(['uno/__main__.py'],
              pathex=['/mnt/c/Users/josia/MEGA/Projects/Programming Languages/Python/Uno'],
              binaries=[],
              datas=[],
              hiddenimports=[],
              hookspath=[],
              runtime_hooks=[],
-             excludes=['subprocess\r'],
+             excludes=[],
              win_no_prefer_redirects=False,
              win_private_assemblies=False,
              cipher=block_cipher,

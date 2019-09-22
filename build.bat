@@ -1,1 +1,1 @@
-python -m PyInstaller ".\uno.py" --onefile --name "Uno" --exclude-module "subprocess"
+python -m PyInstaller ".\uno\__main__.py" --onefile --name "Uno"
