@@ -2,6 +2,11 @@ from ._mods import *
 from ._color import *
 from ._colors import *
 
+questions = {
+    'wild': "What color would you like to change the color to? ",
+    'call wild': "The last player played a Draw Four Wild. Would you like to call? "
+}
+
 class Card:
     def __init__(self, long_name, short_name, color, number, weight, points):
         self.long_name = long_name
@@ -51,18 +56,30 @@ class Wild(Card):
     def played(self, game):
         game.card = copy.copy(self)
         game.card.color = game.player.ask(
-            'What color would you like to change the color to? ', Color, limits=(WILD,))
+            questions['wild'], Color, limits=(WILD,))
         print('%s changed the color to %s.' % (game.player.name, game.card.color.name))
 class WildDraw4(Wild):
     def __init__(self):
         super().__init__('Wild Draw 4', 'D4', 'd4')
     def played(self, game):
+        cur_color = game.card.color
         super().played(game)
         game.ix += 1
-        print("%s forced %s to draw four cards"
-        % (game.player.name,
-        game.players[game.ix%len(game.players)].name))
-        game.players[game.ix%len(game.players)].draw(4)
+        attacked_player = game.players[game.ix%len(game.players)]
+        print("%s forced %s to draw four cards."
+        % (game.player.name, attacked_player.name))
+        called = attacked_player.ask(questions['call wild'], bool)
+        if called:
+            if cur_color in sort_cards(game.player.hand):
+                print("%s called and forced %s to draw four cards instead."
+                % (attacked_player.name, game.player.name))
+                game.player.draw(4)
+                game.ix -= 1
+            else:
+                print("%s called and was wrong, so they had to draw six cards."
+                % attacked_player.name)
+                attacked_player.draw(6)
+        else: attacked_player.draw(4)
 
 def get_card_name(card):
     value = card.long_name.upper().replace(' ', '_')
@@ -77,6 +94,22 @@ def get_card_name(card):
         newval += char
         prevchar = char
     return newval
+def tally(seq):
+    res = 0
+    for card in seq:
+        res += card.points
+    return res
+def sort_cards(seq, n='object'):
+    if n == 'object':
+        do = compile('card.color', '<card_sort>', 'eval')
+    elif n == 'code':
+        do = compile('card.color.code', '<card_sort>', 'eval')
+    res = {}
+    for card in seq:
+        if eval(do) not in res:
+            res[eval(do)] = []
+        res[eval(do)].append(card)
+    return res
 
 from ._game import *
 _r_core = False

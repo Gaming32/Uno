@@ -3,8 +3,8 @@
 block_cipher = None
 
 
-a = Analysis(['uno\\__main__.py'],
-             pathex=['C:\\Users\\josia\\MEGA\\Projects\\Programming Languages\\Python\\Uno'],
+a = Analysis(['uno/__main__.py'],
+             pathex=['/mnt/c/Users/josia/MEGA/Projects/Programming Languages/Python/Uno'],
              binaries=[],
              datas=[],
              hiddenimports=[],

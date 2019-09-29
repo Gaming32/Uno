@@ -1,6 +1,7 @@
 from ._color import *
 from ._mods import *
 from ._core import *
+from ._card import *
 
 class Player:
     def __init__(self, card_count=7):
@@ -12,10 +13,7 @@ class Player:
     def remove_from_hand(self, card):
         self.hand.remove(card)
     def score(self):
-        score = 0
-        for card in self.hand:
-            score += card.points
-        return score
+        return tally(self.hand)
     def play(self, current_card, game):
         def do():
             while True:
@@ -48,6 +46,8 @@ class Player:
             return random.choice(list(COLOR_SET))
         elif issubclass(t, str):
             return random.choice(string.printable)
+        elif issubclass(t, bool):
+            return bool(random.randint(0, 1))
     def _validate_ask(self, v, t, limits):
         ret = ()
         if isinstance(v, t): ret = v, True
@@ -55,6 +55,28 @@ class Player:
             for color in COLOR_SET:
                 if color.code == str(v[0]):
                     ret = color, True
+                    break
+            else:
+                ret = v, False
+        elif issubclass(t, bool):
+            if isinstance(v, str):
+                v = v.lower()
+                if v[0] == 'y':
+                    ret = True, True
+                elif v[0] == 'n':
+                    ret = False, True
+                elif v[0] == 't':
+                    ret = True, True
+                elif v[0] == 'f':
+                    ret = False, True
+                elif v[0] == '1':
+                    ret = True, True
+                elif v[0] == '0':
+                    ret = False, True
+                else:
+                    ret = v, False
+            else:
+                ret = bool(v), True
         else: ret = v, False
         if ret[0] in limits: return ret[0], False
         else: return ret
@@ -76,11 +98,7 @@ class RealPlayer(Player):
     def _play(self, current_card):
         self.doprint('Current card:', current_card)
         self.doprint(*self.hand)
-        hand_colors = {}
-        for card in self.hand:
-            if card.color.code not in hand_colors:
-                hand_colors[card.color.code] = []
-            hand_colors[card.color.code].append(card)
+        hand_colors = sort_cards(self.hand, 'code')
         desired_color = '!'
         while not desired_color or desired_color.lower()[0] not in hand_colors:
             desired_color = input('What color do you want to play? ')
@@ -112,6 +130,13 @@ class ComputerPlayer(Player):
     def __init__(self, card_count=7):
         super().__init__(card_count)
         self.name = random.choice(self.NAMES)
+    def _ask(self, q, t):
+        if q == questions['wild']:
+            cards = sort_cards(self.hand)
+            cols = list(cards)
+            cols.sort(key=(lambda x: tally(cards[x])))
+            return cols[0]
+        else: return super()._ask(q, t)
     def _play(self, current_card):
         self.hand.sort(key=(lambda x: x.points), reverse=True)
         for card in self.hand:
