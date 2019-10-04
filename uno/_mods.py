@@ -51,6 +51,6 @@ if _failed_libs:
     else: raise ImportError('The following libraries were unavailable: %s.' % _libmsg)
 
 import math, random, socket, pickle, time, _thread, string, copy
-_ordinal = (lambda n: "%d%s" % (n,"tsnrhtdd"[(math.floor(n/10)%10!=1)*(n%10<4)*n%10::4]))
+ordinal = (lambda n: "%d%s" % (n,"tsnrhtdd"[(math.floor(n/10)%10!=1)*(n%10<4)*n%10::4]))
 
 # __all__ = dir()
