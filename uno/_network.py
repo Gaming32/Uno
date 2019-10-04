@@ -121,4 +121,4 @@ class NetworkPlayer(Network):
     def _display_message(self, *vals):
         self._game.display_message(*vals)
 
-__all__ = dir()
+# __all__ = dir()

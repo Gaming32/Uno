@@ -35,4 +35,4 @@ class Game:
             'place with', player.score(), 'points.')
         self.display_message(self.player.name, 'wins!')
 
-__all__ = dir()
+# __all__ = dir()

@@ -1,0 +1,1 @@
+print('This is an example mod which displays text on launch.')

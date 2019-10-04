@@ -4,4 +4,4 @@ class Color:
         self.name = name
         self.ansi = '3' + str(ansi)
 
-__all__ = dir()
+# __all__ = dir()

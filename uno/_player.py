@@ -147,4 +147,4 @@ def draw(count):
     hand = nrandom.choice(CARD_LIST, count, False, WEIGHT_LIST)
     return list(hand)
 
-__all__ = dir()
+# __all__ = dir()

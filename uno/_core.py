@@ -39,4 +39,4 @@ def calculate_chance():
     return cards, chances
 CARD_LIST, WEIGHT_LIST = calculate_chance()
 
-__all__ = dir()
+# __all__ = dir()
