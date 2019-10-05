@@ -31,7 +31,7 @@ class Game:
         player_scores = self.players[:]
         player_scores.sort(key=(lambda x: x.score()), reverse=True)
         for (i, player) in enumerate(player_scores[:-1]):
-            self.display_message(player.name, 'came in', _ordinal(len(self.players)-i),
+            self.display_message(player.name, 'came in', ordinal(len(self.players)-i),
             'place with', player.score(), 'points.')
         self.display_message(self.player.name, 'wins!')
 

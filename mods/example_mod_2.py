@@ -5,7 +5,7 @@ class EveryOneDraw(uno.Wild):
     def played(self, game):
         super().played(game)
         for player in game.players:
-            if player is not self:
+            if player is not game.player:
                 player.draw(4)
         if len(game.players):
             game.ix += 1
