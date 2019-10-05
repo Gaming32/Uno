@@ -7,7 +7,7 @@ class EveryOneDraw(uno.Wild):
         for player in game.players:
             if player is not game.player:
                 player.draw(4)
-        if len(game.players):
+        if len(game.players) < 3:
             game.ix += 1
         print('%s made everyone draw four cards.' % game.player.name)
 EVERYONE_DRAW_CARD = EveryOneDraw()
