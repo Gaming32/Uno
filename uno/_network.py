@@ -11,7 +11,7 @@ INT_TYPE    = 0b00
 STRING_TYPE = 0b01
 FLOAT_TYPE  = 0b10
 
-class Token:
+class DataToObjects:
     def __init__(self, string):
         self.reset(string)
     def reset(self, string):
@@ -71,7 +71,32 @@ class Token:
                     self.state ^= IN_VALUE
                     self.cur += 1
         return self.data
+def data2objects(data):
+    value = DataToObjects(data).tokenize()
+    value.pop(0xff)
+    name = value.pop(0x00)
+    res = []
+    for obj in value.values():
+        res.append(obj)
+    return {'name': name, 'args': res}
+
+def objects2data(name, *args):
+    data = b''
+    data += b'\x00'
+    data += len(name).to_bytes(2, 'big')
+    data += name.encode()
+    for arg in args:
+        data += '\x01'
+        if isinstance(arg, str):
+            data += len(arg).to_bytes(2, 'big')
+            data += arg.encode()
+        elif isinstance(arg, int):
+            leng = arg.bit_length() // 8 + 1
+            data += leng.to_bytes(2, 'big')
+            data += arg.to_bytes(leng, 'big')
+    data += '\xff'
+    return data
 
 if __name__ == '__main__':
-    val = Token(b'\x00\x00\x06Hello!\x01\x00\x00\x01\x05\x01\x01\x00\x06World!\x01\x02\x00\x04\x40\xb0\x00\x00\xff').tokenize()
+    val = data2objects(b'\x00\x00\x06Hello!\x01\x00\x00\x01\x05\x01\x01\x00\x06World!\x01\x02\x00\x04\x40\xb0\x00\x00\xff')
     print(val)
