@@ -1,102 +1,126 @@
-import struct
+import socket
+from . import _network_script as netsc
+from ._player import *
+from ._core import *
 
-NO_STATE        = 0b00000
-IN_CALL         = 0b00001
-IN_CALL_START   = 0b00010
-IN_ARG_START    = 0b00100
-IN_LENGTH_IDENT = 0b01000
-IN_VALUE        = 0b10000
+def card2object(card):
+    return card.__class__.__name__, card.color.name, card.number
+def objects2card(class_name, color_name, number):
+    for card in CARD_SET:
+        if (card.__class__.__name__ == class_name
+        and card.color.name == color_name
+        and card.number == number):
+            break
+    return card
 
-INT_TYPE    = 0b00
-STRING_TYPE = 0b01
-FLOAT_TYPE  = 0b10
+class Server:
+    def __init__(self, card_count=7):
+        sockobj = socket.socket()
+        sockobj.bind(('', 4000))
+        sockobj.listen(0)
+        print('Waiting for player to join...')
+        conn, (host, port) = sockobj.accept()
+        self.sockobj = conn
+        self.sockobj.send(netsc.objects2data('initialize', card_count))
+    def draw(self, count):
+        self.sockobj.send(netsc.objects2data('draw', count))
+    def remove_from_hand(self, card):
+        self.sockobj.send(netsc.objects2data('remove_from_hand', card2object(card)))
+    def score(self):
+        self.sockobj.send(netsc.objects2data('tally'))
+        return netsc.data2objects(self.sockobj.recv(2048))['args']
+    def play(self, current_card, game):
+        self.sockobj.send(netsc.objects2data('play', card2object(current_card), 'game_mask'))
+        while True:
+            data = netsc.data2objects(self.sockobj.recv(2048))
+            if data['return']:
+                data = data['args']
+                if data is not None:
+                    data = objects2card(*data)
+                break
+            elif data['name'] == 'print':
+                game.display_message(*data['args'])
+        return data
+    def ask(self, q, t=str, limits=()):
+        t = t.__name__
+        self.sockobj.send(netsc.objects2data('ask', q, t, limits))
+        returnval = netsc.data2objects(self.sockobj.recv(2048))['args']
+        if issubclass(t, Card):
+            returnval = objects2card(*returnval)
+        return returnval
+    def end(self):
+        self.sockobj.send(netsc.objects2data('end'))
+    def doprint(self, *vals):
+        self.sockobj.send(netsc.objects2data('doprint', *vals))
+    @property
+    def hand(self):
+        self.sockobj.send(netsc.objects2data('hand'))
+        res = []
+        ret = netsc.data2objects(self.sockobj.recv(2048))['args']
+        for obj in ret:
+            res.append(objects2card(*obj))
+        return res
 
-class DataToObjects:
-    def __init__(self, string):
-        self.reset(string)
-    def reset(self, string):
-        self.string = string
-        self.state = NO_STATE
-        self.type = NO_STATE
-        self.cur = 0x00
-        self.i = 0
-        self.length = 0
-        self.data = {}
-    def tokenize(self):
-        while self.i < len(self.string):
-            if not self.state & IN_CALL and self.string[self.i] == 0x00:
-                self.state |= IN_CALL
-                self.state |= IN_CALL_START
-                self.state |= IN_VALUE
-                self.state |= IN_LENGTH_IDENT
-                self.type = STRING_TYPE
-                self.length = 0
-                self.i += 1
-            elif self.state & IN_CALL and self.string[self.i] == 0xff:
-                self.state ^= IN_CALL
-                self.i += 1
-            elif self.state & IN_CALL and not self.state & IN_VALUE and self.string[self.i] == 0x01:
-                self.state |= IN_ARG_START
-                self.state |= IN_VALUE
-            elif self.state & IN_CALL and self.state & IN_ARG_START:
-                self.i += 1
-                self.type = self.string[self.i]
-                self.state ^= IN_ARG_START
-                self.state |= IN_LENGTH_IDENT
-                self.i += 1
-            elif self.state & IN_LENGTH_IDENT:
-                if self.length == 0:
-                    self.data[self.cur] = bytes((self.string[self.i],))
-                    self.length += 1
-                    self.i += 1
-                elif self.length == 1:
-                    self.data[self.cur] += bytes((self.string[self.i],))
-                    self.length += 1
-                    self.i += 1
-                else:
-                    self.data[0xff] = int.from_bytes(self.data[self.cur], 'big')
-                    self.state ^= IN_LENGTH_IDENT
-                    value = self.string[self.i:self.i + self.data[0xff]]
-                    if self.type == STRING_TYPE:
-                        self.data[self.cur] = value.decode()
-                        if self.state & IN_CALL_START:
-                            self.state ^= IN_CALL_START
-                    elif self.type == INT_TYPE:
-                        self.data[self.cur] = int.from_bytes(value, 'big')
-                    elif self.type == FLOAT_TYPE:
-                        self.data[self.cur] = struct.unpack('>f', value)[0]
-                    self.i += self.data[0xff]
-                    self.length = 0
-                    self.type = NO_STATE
-                    self.state ^= IN_VALUE
-                    self.cur += 1
-        return self.data
-def data2objects(data):
-    value = DataToObjects(data).tokenize()
-    value.pop(0xff)
-    name = value.pop(0x00)
-    res = []
-    for obj in value.values():
-        res.append(obj)
-    return {'name': name, 'args': res}
+class Client:
+    class GamePrinter:
+        def __init__(self, client):
+            self.client = client
+        def display_message(self, *vals):
+            self.client.sockobj.send(netsc.objects2data('print', *vals))
 
-def objects2data(name, *args):
-    data = b''
-    data += b'\x00'
-    data += len(name).to_bytes(2, 'big')
-    data += name.encode()
-    for arg in args:
-        data += '\x01'
-        if isinstance(arg, str):
-            data += len(arg).to_bytes(2, 'big')
-            data += arg.encode()
-        elif isinstance(arg, int):
-            leng = arg.bit_length() // 8 + 1
-            data += leng.to_bytes(2, 'big')
-            data += arg.to_bytes(leng, 'big')
-    data += '\xff'
-    return data
-
-if __name__ == '__main__':
-    val = data2objects(b'\x00\x00\x06Hello!\x01\x00\x00\x01\x05\x01\x01\x00\x06World!\x01\x02\x00\x04\x40\xb0\x00\x00\xff')
-    print(val)
+    def __init__(self, host, port=4000, player_type=RealPlayer):
+        self.sockobj = socket.socket()
+        self.sockobj.connect((host, port))
+        init_call = netsc.data2objects(self.sockobj.recv(2048))
+        if not init_call['return'] and init_call['name'] == 'initialize':
+            self.player = player_type(*init_call['args'])
+            self._running = False
+    def listen(self):
+        return netsc.data2objects(self.sockobj.recv(2048))
+    def listen_function(self):
+        value = self.listen()
+        if value['name'] == 'end': self.end()
+        elif value['name'] == 'draw': self.end(*value['args'])
+        elif value['name'] == 'remove_from_hand': self.remove_from_hand(*value['args'])
+        elif value['name'] == 'tally': self.score()
+        elif value['name'] == 'play': self.play(*value['args'])
+        elif value['name'] == 'ask': self.ask(*value['args'])
+        elif value['name'] == 'doprint': self.doprint(*value['args'])
+        elif value['name'] == 'hand': self.get_hand(*value['args'])
+    def end(self):
+        self._running = False
+        self.player.end()
+    def mainloop(self):
+        self._running = True
+        while self._running:
+            self.listen_function()
+    def draw(self, count):
+        self.player.draw(count)
+    def remove_from_hand(self, card):
+        card = objects2card(*card)
+        self.player.remove_from_hand(card)
+    def score(self):
+        value = self.player.score()
+        self.sockobj.send(netsc.return2data(value))
+    def play(self, current_card, game):
+        print('Your turn!')
+        game = self.GamePrinter(self)
+        current_card = objects2card(*current_card)
+        returnval = self.player.play(current_card, game)
+        if isinstance(returnval, Card):
+            returnval = card2object(returnval)
+        self.sockobj.send(netsc.return2data(returnval))
+        print('Waiting for the other players to complete their turns...')
+    def ask(self, q, t='str', limits=()):
+        t = eval(t)
+        value = self.player.ask(q, t, limits)
+        if issubclass(t, Card):
+            value = card2object(value)
+        self.sockobj.send(netsc.return2data(value))
+    def doprint(self, *vals):
+        self.player.doprint(*vals)
+    def get_hand(self):
+        res = []
+        for card in self.player.hand:
+            res.append(card2object(card))
+        self.sockobj.send(netsc.return2data(res))
