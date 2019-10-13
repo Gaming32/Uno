@@ -60,6 +60,10 @@ class Server:
         for obj in ret:
             res.append(objects2card(*obj))
         return res
+    @property
+    def name(self):
+        self.sockobj.send(netsc.objects2data('name'))
+        return netsc.data2objects(self.sockobj.recv(2048))['args']
 
 class Client:
     class GamePrinter:
@@ -87,6 +91,7 @@ class Client:
         elif value['name'] == 'ask': self.ask(*value['args'])
         elif value['name'] == 'doprint': self.doprint(*value['args'])
         elif value['name'] == 'hand': self.get_hand(*value['args'])
+        elif value['name'] == 'name': self.get_name()
     def end(self):
         self._running = False
         self.player.end()
@@ -124,3 +129,5 @@ class Client:
         for card in self.player.hand:
             res.append(card2object(card))
         self.sockobj.send(netsc.return2data(res))
+    def get_name(self):
+        self.sockobj.send(netsc.return2data(self.player.name))
