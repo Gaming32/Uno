@@ -57,8 +57,11 @@ class Server:
         self.sockobj.send(netsc.objects2data('hand'))
         res = []
         ret = netsc.data2objects(self.sockobj.recv(2048))['args']
+        print(ret)
         for obj in ret:
+            print(obj)
             res.append(objects2card(*obj))
+            print(res[-1])
         return res
     @property
     def name(self):

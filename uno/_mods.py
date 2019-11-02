@@ -41,9 +41,15 @@ if _failed_libs:
         ' Would you like to do that now? (y,n) ' % _libmsg)
         if _libres in ('Y', 'y'):
             import subprocess, sys
-            subprocess.check_call([sys.executable, '-m', 'pip', 'install', '--user', '--upgrade', 'pip'])
+            try:
+                subprocess.check_call([sys.executable, '-m', 'pip', 'install', '--user', '--upgrade', 'pip', '--no-warn-script-location'])
+            except subprocess.CalledProcessError:
+                try:
+                    subprocess.check_call(['sudo', 'yum', 'install', 'python3-pip'])
+                except subrocess.CalledProcessError:
+                    subprocess.check_call(['sudo', 'apt-get', 'install', 'pip3'])
             for _lib in _failed_libs:
-                subprocess.check_call([sys.executable, '-m', 'pip', 'install', '--user', _lib])
+                subprocess.call([sys.executable, '-m', 'pip', 'install', '--user', '--upgrade', _lib, '--no-warn-script-location'])
             print('Success!')
             
             import numpy.random as nrandom
