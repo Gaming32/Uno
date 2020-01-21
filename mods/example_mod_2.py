@@ -17,5 +17,5 @@ uno.CARD_LIST[:], uno.WEIGHT_LIST[:] = uno.calculate_chance()
 name = 'Everyone Draw 4 Card'
 
 if __name__ == '__main__':
-    from uno._main import *
+    from uno.main import *
     main()

@@ -6,7 +6,7 @@ from ._game import *
 player_types = [
     ('computer players', ComputerPlayer),
     ('real players (1 or 0)', RealPlayer),
-    ('LAN players', Server),
+    # ('LAN players', Server),
 ]
 
 def get_number(value):
@@ -43,7 +43,7 @@ def end(quitter):
 
 options = [
     ('Play Game', play_game),
-    ('Join Network Game', join_game),
+    # ('Join Network Game', join_game),
     ('Quit', end),
 ]
 

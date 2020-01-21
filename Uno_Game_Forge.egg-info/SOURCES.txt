@@ -1,0 +1,10 @@
+README.md
+setup.py
+setup_forge.py
+uno_forge.py
+unoforge.py
+Uno_Game_Forge.egg-info/PKG-INFO
+Uno_Game_Forge.egg-info/SOURCES.txt
+Uno_Game_Forge.egg-info/dependency_links.txt
+Uno_Game_Forge.egg-info/requires.txt
+Uno_Game_Forge.egg-info/top_level.txt

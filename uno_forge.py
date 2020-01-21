@@ -1,6 +1,9 @@
 import sys, os
 import uno
-from uno._main import *
+from uno.main import *
+
+__version__ = '1.0.2-1.0'
+__author__ = 'Gaming32'
 
 def getmods():
     for file in os.listdir('mods'):

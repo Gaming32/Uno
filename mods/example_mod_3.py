@@ -1,5 +1,5 @@
 import uno
-from uno._main import *
+from uno.main import *
 
 custom_options = [
     ('First Option', (lambda quitter: print('No Beeswax'))),
