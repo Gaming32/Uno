@@ -19,3 +19,6 @@ File end:
 ``` python
 if __name__ == '__main__': unomain.main()
 ```
+## Features
+### Custom main menu item
+To add a custom main menu item, modify `unomain.options`. `unomain.options` is a list of `(label, func)`. `func` accepts a 1-item list called `quitter`. `quitter[0]` is set to `False` be default, setting it to `True` causes the menu to close; being the main menu, this will most likely end the program.

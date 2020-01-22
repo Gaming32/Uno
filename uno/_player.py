@@ -127,21 +127,49 @@ class ComputerPlayer(Player):
         'Bixby',
         'Siri'
     ]
+    used_names = set()
     def __init__(self, card_count=7):
         super().__init__(card_count)
-        self.name = random.choice(self.NAMES)
+        if self.used_names == set(self.NAMES):
+            self.used_names.clear()
+        namelist = list(set(self.NAMES) - self.used_names)
+        self.name = random.choice(namelist)
+        self.used_names.add(self.name)
+    @staticmethod
+    def tally_special(cardlist):
+        value = tally(cardlist)
+        multiple = 0.5 * len(cardlist) + 0.5
+        return value * multiple
+    @staticmethod
+    def choose_color(cardlist):
+        cards = sort_cards(cardlist)
+        cols = list(cards)
+        cols.sort(key=(lambda x: ComputerPlayer.tally_special(cards[x])))
+        return cols[0]
     def _ask(self, q, t):
         if q == questions['wild']:
-            cards = sort_cards(self.hand)
-            cols = list(cards)
-            cols.sort(key=(lambda x: tally(cards[x])))
-            return cols[0]
+            return self.choose_color(self.hand)
         else: return super()._ask(q, t)
     def _play(self, current_card):
-        self.hand.sort(key=(lambda x: x.points), reverse=True)
-        for card in self.hand:
+        cards = sort_cards(self.hand)
+        cols = list(cards)
+        playable_cols = set()
+        for color in cols:
+            for card in cards[color]:
+                if self.can_play_card(current_card, card):
+                    playable_cols.add(color)
+        # colored_cards = [cards[x] for x in playable_cols]
+        colored_cards = []
+        for color in playable_cols:
+            colored_cards += cards[color]
+        color = self.choose_color(colored_cards)
+        col_cards = cards[color]
+        col_cards.sort(key=(lambda x: x.points), reverse=True)
+        for card in col_cards:
             if self.can_play_card(current_card, card):
                 return card
+    def end(self):
+        self.used_names.clear()
 
 def draw(count):
     hand = nrandom.choice(CARD_LIST, count, False, WEIGHT_LIST)
