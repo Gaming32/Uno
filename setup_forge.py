@@ -11,7 +11,7 @@ setuptools.setup(
     long_description = open('README.md').read(),
     long_description_content_type = 'text/markdown',
     install_requires = [
-        'uno-game',
+        'Uno-Game>=1.0.2,<1.1,<2',
     ],
     py_modules = [
         'uno_forge',
