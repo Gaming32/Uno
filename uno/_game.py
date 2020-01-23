@@ -18,6 +18,8 @@ class Game:
         for player in self.players:
             player.end()
     def begin(self):
+        for player in self.players:
+            player.start()
         while True:
             card = self.player.play(self.card, self)
             if card is None: self.next_player()

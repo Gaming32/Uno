@@ -1,0 +1,3 @@
+from PodSixNet.Channel import Channel
+
+class GameChannel(Channel): ...
