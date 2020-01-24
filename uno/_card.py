@@ -2,11 +2,6 @@ from ._mods import *
 from ._color import *
 from ._colors import *
 
-questions = {
-    'wild': "What color would you like to change the color to? ",
-    'call wild': "The last player played a Draw Four Wild. Would you like to call? "
-}
-
 class Card:
     def __init__(self, long_name, short_name, color, number, weight, points):
         self.long_name = long_name

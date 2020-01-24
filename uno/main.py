@@ -1,6 +1,6 @@
 import sys
 from ._player import *
-from ._network import *
+# from ._network import *
 from ._game import *
 
 player_types = [
@@ -65,8 +65,12 @@ def menu(name, options):
         else: print('Invalid option: %s' % value)
         if quitter[0]: return
 
+def exit_callback(): pass
+
 def main():
-    menu('Main Menu', options)
+    try: menu('Main Menu', options)
+    except KeyboardInterrupt: pass
+    exit_callback()
 
 # __all__ = dir()
 

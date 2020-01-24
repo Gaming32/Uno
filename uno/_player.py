@@ -2,6 +2,7 @@ from ._color import *
 from ._mods import *
 from ._core import *
 from ._card import *
+from .lang import *
 
 class Player:
     def __init__(self, card_count=7):
@@ -111,7 +112,7 @@ class RealPlayer(Player):
         desired_number = ''
         while desired_number not in color_numbers:
             desired_number = input('What number do you want to play? ')
-            desired_number = desired_number.strip()
+            desired_number = desired_number.strip().lower()
             # try: desired_number = int(desired_number)
             # except ValueError: desired_number = ''
         for card in hand_colors[desired_color]:
@@ -129,13 +130,17 @@ class ComputerPlayer(Player):
         'Siri'
     ]
     used_names = set()
+    name_loop_count = 0
     def __init__(self, card_count=7):
         super().__init__(card_count)
         if self.used_names == set(self.NAMES):
             self.used_names.clear()
+            ComputerPlayer.name_loop_count += 1
         namelist = list(set(self.NAMES) - self.used_names)
         self.name = random.choice(namelist)
         self.used_names.add(self.name)
+        self.name += ' ' + int_to_roman(self.name_loop_count)
+        self.name = self.name.strip()
     @staticmethod
     def tally_special(cardlist):
         value = tally(cardlist)
@@ -171,6 +176,7 @@ class ComputerPlayer(Player):
                 return card
     def end(self):
         self.used_names.clear()
+        ComputerPlayer.name_loop_count = 0
 
 def draw(count):
     hand = nrandom.choice(CARD_LIST, count, False, WEIGHT_LIST)
