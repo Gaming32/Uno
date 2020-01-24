@@ -2,7 +2,7 @@ import setuptools
 
 setuptools.setup(
     name = 'Uno Game-Forge',
-    version = '1.0',
+    version = '1.1b1',
     url = 'https://github.com/gaming32/uno',
     author = 'Gaming32',
     author_email = 'gaming32i64@gmail.com',
@@ -11,7 +11,7 @@ setuptools.setup(
     long_description = open('README.md').read(),
     long_description_content_type = 'text/markdown',
     install_requires = [
-        'Uno-Game>=1.0.2,<1.1,<2',
+        'Uno-Game==1.1b2',
     ],
     py_modules = [
         'uno_forge',
