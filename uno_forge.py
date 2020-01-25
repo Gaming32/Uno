@@ -8,7 +8,7 @@ __author__ = 'Gaming32'
 
 def _exit_callback():
     for cb in unoforge._exit_callbacks:
-        try: cb(mods)
+        try: cb()
         except Exception:
             print('An error occurred in the mod "%s"' % cb.__module__)
             print('More info:\n   ', *sys.exc_info()[:2])
@@ -36,10 +36,13 @@ if not os.path.exists('mods'):
     os.mkdir('mods')
 sys.path.append('mods')
 mods = []
+
+unoforge.mods = mods
 for mod in getmods():
     mods.append(__import__(mod))
 
 unomain.exit_callback = _exit_callback
-unoforge.mods = mods
+if unoforge._cards_to_add:
+    uno.CARD_LIST[:], uno.WEIGHT_LIST[:] = uno.calculate_chance()
 
 if __name__ == '__main__': unomain.main()

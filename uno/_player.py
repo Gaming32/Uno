@@ -5,11 +5,12 @@ from ._card import *
 from .lang import *
 
 class Player:
+    __slots__ = ['hand', 'name']
     def __init__(self, card_count=7):
         self.hand = []
         self.draw(card_count)
         self.name = 'Player'
-    def start(): pass
+    def start(self): pass
     def draw(self, count):
         self.hand.extend(draw(count))
     def remove_from_hand(self, card):
@@ -99,25 +100,27 @@ class RealPlayer(Player):
         self.name = input('What is your name? ')
     def _play(self, current_card):
         self.doprint('Current card:', current_card)
-        self.doprint(*self.hand)
-        hand_colors = sort_cards(self.hand, 'code')
-        desired_color = '!'
-        while not desired_color or desired_color.lower()[0] not in hand_colors:
-            desired_color = input('What color do you want to play? ')
-        desired_color = desired_color.lower()[0]
-        self.doprint(*hand_colors[desired_color])
-        color_numbers = []
-        for card in hand_colors[desired_color]:
-            color_numbers.append(str(card.number))
-        desired_number = ''
-        while desired_number not in color_numbers:
-            desired_number = input('What number do you want to play? ')
-            desired_number = desired_number.strip().lower()
-            # try: desired_number = int(desired_number)
-            # except ValueError: desired_number = ''
-        for card in hand_colors[desired_color]:
-            if str(card.number) == desired_number: break
-        return card
+        while True:
+            self.doprint(*self.hand)
+            hand_colors = sort_cards(self.hand, 'code')
+            desired_color = '!'
+            while not desired_color or desired_color.lower()[0] not in hand_colors:
+                desired_color = input('What color do you want to play? ')
+            desired_color = desired_color.lower()[0]
+            self.doprint(*hand_colors[desired_color])
+            color_numbers = []
+            for card in hand_colors[desired_color]:
+                color_numbers.append(str(card.number))
+            desired_number = ''
+            while desired_number not in color_numbers and not desired_number.startswith('esc'):
+                desired_number = input('What number do you want to play? ')
+                desired_number = desired_number.strip().lower()
+                # try: desired_number = int(desired_number)
+                # except ValueError: desired_number = ''
+            if desired_number.startswith('esc'): continue
+            for card in hand_colors[desired_color]:
+                if str(card.number) == desired_number: break
+            return card
     def _ask(self, q, t):
         return input(q)
     def doprint(self, *vals): print(*vals)
@@ -139,7 +142,10 @@ class ComputerPlayer(Player):
         namelist = list(set(self.NAMES) - self.used_names)
         self.name = random.choice(namelist)
         self.used_names.add(self.name)
-        self.name += ' ' + int_to_roman(self.name_loop_count)
+        name_id = self.name_loop_count
+        if name_id > 0:
+            name_id = name_id + 1
+        self.name += ' ' + int_to_roman(name_id)
         self.name = self.name.strip()
     @staticmethod
     def tally_special(cardlist):
