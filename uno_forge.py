@@ -45,4 +45,8 @@ unomain.exit_callback = _exit_callback
 if unoforge._cards_to_add:
     uno.CARD_LIST[:], uno.WEIGHT_LIST[:] = uno.calculate_chance()
 
+for mod in mods:
+    if hasattr(mod, 'init'):
+        mod.init()
+
 if __name__ == '__main__': unomain.main()

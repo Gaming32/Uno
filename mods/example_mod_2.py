@@ -1,4 +1,6 @@
 import uno
+import uno.main as unomain
+import unoforge
 class EveryOneDraw(uno.Wild):
     def __init__(self):
         super().__init__('Everyone Draw 4', 'ED4', 'ed4')
@@ -10,12 +12,8 @@ class EveryOneDraw(uno.Wild):
         if len(game.players) < 3:
             game.ix += 1
         print('%s made everyone draw four cards.' % game.player.name)
-EVERYONE_DRAW_CARD = EveryOneDraw()
-uno.CARD_SET.add(EVERYONE_DRAW_CARD)
-uno.CARD_LIST[:], uno.WEIGHT_LIST[:] = uno.calculate_chance()
+unoforge.add_single_card(EveryOneDraw)
 
 name = 'Everyone Draw 4 Card'
 
-if __name__ == '__main__':
-    from uno.main import *
-    main()
+if __name__ == '__main__': unomain.main()
