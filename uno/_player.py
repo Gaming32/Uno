@@ -10,7 +10,7 @@ class Player:
         self.hand = []
         self.draw(card_count)
         self.name = 'Player'
-    def start(self): pass
+    def start(self, game): pass
     def draw(self, count):
         self.hand.extend(draw(count))
     def remove_from_hand(self, card):

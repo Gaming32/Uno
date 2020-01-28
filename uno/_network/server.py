@@ -1,13 +1,13 @@
-from PodSixNet.Server import Server
-from .channel import GameChannel
+from netsc import Server
+from .other import serialize_card
 
 class GameServer(Server):
-    channelClass = GameChannel
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.conn_count = 0
-        self.channels = {}
-    def Connected(self, channel, addr):
-        self.channels[self.conn_count] = channel
-        channel.Send({'action': '_init', 'id': self.conn_count})
-        self.conn_count += 1
+    bind_addr = ('', 8660)
+    def start(self, game):
+        self.wrapped = game
+        super().start(None)
+    def adj_args_play(self, *args, **kwargs):
+        args = list(args)
+        args[0] = serialize_card(args[0])
+        args[1] = None
+        return tuple(args)
