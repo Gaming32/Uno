@@ -1,4 +1,5 @@
 build
+dist
 .vscode
 Uno_Game.egg-info
 Uno_Game_Forge.egg-info
