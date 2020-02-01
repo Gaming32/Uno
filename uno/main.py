@@ -1,12 +1,12 @@
 import sys
 from ._player import *
-# from ._network import *
+from ._network import *
 from ._game import *
 
 player_types = [
     ('computer players', ComputerPlayer),
     ('real players (1 or 0)', RealPlayer),
-    # ('LAN players', Server),
+    # ('LAN players', NetworkPlayer),
 ]
 
 def get_number(value):
@@ -28,14 +28,16 @@ def play_game(quitter):
     game.begin()
 
 def join_game(quitter):
+    client = GameClient(RealPlayer)
     while True:
         host = input('Hostname/IP of the game to join: ')
-        try: client = Client(host)
+        try: client.connect((host, 8660))
         except socket.error:
             print('Unable to connect to game')
             continue
         else: break
-    client.mainloop()
+    while True:
+        client.poll()
 
 def end(quitter):
     print('Goodbye.')
