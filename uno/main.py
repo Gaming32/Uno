@@ -6,7 +6,7 @@ from ._game import *
 player_types = [
     ('computer players', ComputerPlayer),
     ('real players (1 or 0)', RealPlayer),
-    # ('LAN players', NetworkPlayer),
+    ('LAN players', NetworkPlayer),
 ]
 
 def get_number(value):
@@ -28,7 +28,7 @@ def play_game(quitter):
     game.begin()
 
 def join_game(quitter):
-    client = GameClient(RealPlayer)
+    client = GameClient(RealPlayer())
     while True:
         host = input('Hostname/IP of the game to join: ')
         try: client.connect((host, 8660))
@@ -37,7 +37,10 @@ def join_game(quitter):
             continue
         else: break
     while True:
-        client.poll()
+        try: client.poll()
+        except ConnectionError:
+            print('Disconnected from game host.')
+            break
 
 def end(quitter):
     print('Goodbye.')
@@ -45,7 +48,7 @@ def end(quitter):
 
 options = [
     ('Play Game', play_game),
-    # ('Join Network Game', join_game),
+    ('Join Network Game', join_game),
     ('Quit', end),
 ]
 
