@@ -6,7 +6,7 @@ To install use the command `python -m pip install uno-game`, (`python -m pip ins
 # Modding
 NOTE: The latest version of uno_forge supports the following uno versions: 1.0.2
 ## Starting
-Create a mod in the `mods` folder with a compatable Python file extension and follow the following conventions:
+Create a mod in the `mods` folder or the `~/.uno_forge_mods` folder with a compatable Python file extension and follow the following conventions:
 
 File start:
 ``` python

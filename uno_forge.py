@@ -14,8 +14,12 @@ def _exit_callback():
             print('More info:\n   ', *sys.exc_info()[:2])
 
 def getmods():
-    for file in os.listdir('mods'):
-        if not os.path.isfile('mods/' + file): continue
+    if os.path.isdir('mods'):
+        for file in os.listdir('mods'):
+            if not os.path.isfile(os.path.join('mods', file)): continue
+            yield os.path.splitext(os.path.basename(file))[0]
+    for file in os.listdir(usermod_dir):
+        if not os.path.isfile(os.path.join(usermod_dir, file)): continue
         yield os.path.splitext(os.path.basename(file))[0]
 
 def getname(mod):
@@ -32,9 +36,11 @@ def modslist(quitter):
     print('Total mods: %i' % len(mods))
 
 unomain.options.insert(-1, ('Mods', modslist))
-if not os.path.exists('mods'):
-    os.mkdir('mods')
+usermod_dir = os.path.expanduser('~/.uno_forge_mods')
+if not os.path.exists(usermod_dir):
+    os.mkdir(usermod_dir)
 sys.path.append('mods')
+sys.path.append(usermod_dir)
 mods = []
 
 unoforge.mods = mods
