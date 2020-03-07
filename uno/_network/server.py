@@ -1,5 +1,5 @@
 from netsc import Server
-from .other import serialize_card, deserialize_card
+from .other import serialize_card, deserialize_card, serialize_color, deserialize_color
 
 class GameServer(Server):
     bind_addr = ('', 8660)
@@ -16,6 +16,8 @@ class GameServer(Server):
         if card is None:
             return card
         return deserialize_card(card)
+    def adj_args_ask(self, q, t, limits):
+        return q, (t.__module__, t.__name__), [serialize_color(l) for l in limits]
     def adj_args_can_play_card(self, card1, card2):
         return serialize_card(card1), serialize_card(card2)
     def adj_args_can_play(self, card):

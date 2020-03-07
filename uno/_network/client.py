@@ -1,5 +1,5 @@
 from netsc import Client
-from .other import deserialize_card, serialize_card, GameSubstitute
+from .other import deserialize_card, serialize_card, GameSubstitute, serialize_color, deserialize_color
 
 class GameClient(Client):
     def deadj_args_start(self, *args):
@@ -10,6 +10,8 @@ class GameClient(Client):
         if card is None:
             return card
         return serialize_card(card)
+    def deadj_args_ask(self, q, t, limits):
+        return (q, getattr(__import__(t[0]), t[1])), {'limits': [deserialize_color(l) for l in limits]}
     def deadj_args_can_play_card(self, card1, card2):
         return (deserialize_card(card1), deserialize_card(card2)), {}
     def deadj_args_can_play(self, card):
