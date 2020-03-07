@@ -20,7 +20,7 @@ class Skip(Card):
     def __init__(self, long_name, color):
         super().__init__(long_name, 'S', color, 's', 2, 20)
     def played(self, game):
-        game.ix += 1
+        game.ix += game.direction
         game.display_message("%s has been skipped"
         % game.players[game.ix%len(game.players)].name)
         # % game.players[(game.ix+1)%len(game.players)].name)
@@ -28,8 +28,8 @@ class Reverse(Card):
     def __init__(self, long_name, color):
         super().__init__(long_name, 'R', color, 'r', 2, 20)
     def played(self, game):
-        if len(game.players) < 3:
-            game.ix += 1
+        if len(game.players) <= 2:
+            game.ix += game.direction
             game.display_message("%s has been skipped"
             % game.players[game.ix%len(game.players)].name)
         else:
@@ -39,8 +39,8 @@ class Draw2(Card):
     def __init__(self, long_name, color):
         super().__init__(long_name, 'D2', color, 'd2', 2, 20)
     def played(self, game):
-        game.ix += 1
-        print("%s forced %s to draw two cards"
+        game.ix += game.direction
+        game.display_message("%s forced %s to draw two cards"
         % (game.player.name,
         game.players[game.ix%len(game.players)].name))
         game.players[game.ix%len(game.players)].draw(2)
@@ -52,26 +52,26 @@ class Wild(Card):
         game.card = copy.copy(self)
         game.card.color = game.player.ask(
             questions['wild'], Color, limits=(WILD,))
-        print('%s changed the color to %s.' % (game.player.name, game.card.color.name))
+        game.display_message('%s changed the color to %s.' % (game.player.name, game.card.color.name))
 class WildDraw4(Wild):
     def __init__(self):
         super().__init__('Wild Draw 4', 'D4', 'd4')
     def played(self, game):
         cur_color = game.card.color
         super().played(game)
-        game.ix += 1
+        game.ix += game.direction
         attacked_player = game.players[game.ix%len(game.players)]
-        print("%s forced %s to draw four cards."
+        game.display_message("%s forced %s to draw four cards."
         % (game.player.name, attacked_player.name))
         called = attacked_player.ask(questions['call wild'], bool)
         if called:
             if cur_color in sort_cards(game.player.hand):
-                print("%s called and forced %s to draw four cards instead."
+                game.display_message("%s called and forced %s to draw four cards instead."
                 % (attacked_player.name, game.player.name))
                 game.player.draw(4)
                 game.ix -= 1
             else:
-                print("%s called and was wrong, so they had to draw six cards."
+                game.display_message("%s called and was wrong, so they had to draw six cards."
                 % attacked_player.name)
                 attacked_player.draw(6)
         else: attacked_player.draw(4)

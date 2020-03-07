@@ -34,9 +34,9 @@ def add_single_card(card_class):
     return card_obj
 
 def menu(name, **opts):
-    """Note: OrderedDict reccomended for `opts` argument"""
-    unomain.menu(name, list(opts.items()))
+    """Note: OrderedDict recommended for `opts` argument"""
+    _unomain.menu(name, list(opts.items()))
 
 def add_custom_player_type(label, player_class):
     """`label` is displayed as "How many %s would you like?" Where %s is `label`"""
-    unomain.player_types.append((label, player_class))
+    _unomain.player_types.append((label, player_class))

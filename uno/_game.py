@@ -1,6 +1,9 @@
 from ._mods import *
 from ._player import *
 
+class _TempPlayer:
+    name = 'The game'
+
 class Game:
     def __init__(self, players):
         self.players = players
@@ -20,6 +23,14 @@ class Game:
     def begin(self):
         for player in self.players:
             player.start(self)
+            player.doprint('You are playing against:', ', '.join(p.name for p in self.players if p is not player))
+
+        old_player = self.player
+        self.player = _TempPlayer()
+        self.card.played(self)
+        self.player = old_player
+        del old_player
+
         while True:
             card = self.player.play(self.card, self)
             if card is None: self.next_player()
@@ -30,6 +41,7 @@ class Game:
                 if not len(self.player.hand): break
                 card.played(self)
                 self.next_player()
+
         player_scores = self.players[:]
         player_scores.sort(key=(lambda x: x.score()), reverse=True)
         for (i, player) in enumerate(player_scores[:-1]):
