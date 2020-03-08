@@ -38,6 +38,7 @@ def join_game(quitter):
         else: break
     while True:
         try: client.poll()
+        except GameOver: break
         except ConnectionError:
             print('Disconnected from game host.')
             break
