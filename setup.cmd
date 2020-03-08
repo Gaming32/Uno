@@ -8,5 +8,4 @@ if not %1.==. (
 twine check dist\*
 if %ERRORLEVEL%==0 (
     twine upload dist\*
-    cd ..;python -m pipinstall --pre -vv -no2 Uno-Game-Forge;cd Uno
 )

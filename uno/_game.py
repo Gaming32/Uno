@@ -47,7 +47,7 @@ class Game:
             if player_scores[playerix] is self.player: break
         del player_scores[playerix]
         player_scores.sort(key=(lambda x: x.score()), reverse=True)
-        for (i, player) in enumerate(player_scores[:-1]):
+        for (i, player) in enumerate(player_scores):
             self.display_message(player.name, 'came in', ordinal(len(self.players)-i),
             'place with', player.score(), 'points.')
         self.display_message(self.player.name, 'wins!')
