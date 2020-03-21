@@ -41,7 +41,7 @@ class Game:
                 self.card = card
                 if card in self.player.hand:
                     self.player.remove_from_hand(card)
-                if not self.player.handfunc('len'): break
+                if not len(self.player.hand): break
                 card.played(self)
                 self.next_player()
 

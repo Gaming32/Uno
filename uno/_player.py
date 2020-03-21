@@ -16,9 +16,9 @@ class Player:
     def remove_from_hand(self, card):
         self.hand.remove(card)
     def handmeth(self, methname, *args, **kwargs):
-        return getattr(self.hand, methname, default=(lambda hand, *args, **kwargs: None))(*args, **kwargs)
+        return getattr(self.hand, methname, (lambda hand, *args, **kwargs: None))(*args, **kwargs)
     def handfunc(self, funcname, *args, **kwargs):
-        return getattr(__builtins__, funcname, default=(lambda hand, *args, **kwargs: None)) (self.hand, *args, **kwargs)
+        return getattr(__builtins__, funcname, (lambda hand, *args, **kwargs: None)) (self.hand, *args, **kwargs)
     def score(self):
         return tally(self.hand)
     def play(self, current_card, game):
