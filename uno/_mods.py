@@ -2,7 +2,12 @@ import sys
 _failed_libs = []
 
 try: import numpy.random as nrandom
-except ImportError: _failed_libs.append('numpy')
+except ModuleNotFoundError: _failed_libs.append('numpy')
+try: __import__('netsc')
+except ModuleNotFoundError: _failed_libs.append('Network-Script')
+
+__version__ = '1.1beta'
+__author__ = 'Gaming32'
 
 if sys.platform[:3] == 'wi#n':
     import winreg

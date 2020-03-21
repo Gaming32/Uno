@@ -15,6 +15,10 @@ class Player:
         self.hand.extend(draw(count))
     def remove_from_hand(self, card):
         self.hand.remove(card)
+    def handmeth(self, methname, *args, **kwargs):
+        return getattr(self.hand, methname, default=(lambda hand, *args, **kwargs: None))(*args, **kwargs)
+    def handfunc(self, funcname, *args, **kwargs):
+        return getattr(__builtins__, funcname, default=(lambda hand, *args, **kwargs: None)) (self.hand, *args, **kwargs)
     def score(self):
         return tally(self.hand)
     def play(self, current_card, game):
@@ -84,7 +88,7 @@ class Player:
         if ret[0] in limits: return ret[0], False
         else: return ret
     def end(self): pass
-    def doprint(self, *vals): pass
+    def doprint(self, *vals, end='\n'): pass
     def can_play_card(self, current_card, card):
         return (card.color == WILD or
         card.number == current_card.number or
@@ -123,7 +127,7 @@ class RealPlayer(Player):
             return card
     def _ask(self, q, t):
         return input(q)
-    def doprint(self, *vals): print(*vals)
+    def doprint(self, *vals, end='\n'): print(*vals, end='\n')
 class ComputerPlayer(Player):
     NAMES = [
         'Hal',

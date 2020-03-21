@@ -1,5 +1,6 @@
 from netsc import Server
 from .other import serialize_card, deserialize_card, serialize_color, deserialize_color
+from . import shared
 from .. import Color
 
 class GameServer(Server):
@@ -36,3 +37,4 @@ class GameServer(Server):
         else: return value
     def post_func_end(self):
         self.sock.close()
+        shared.player_count -= 1

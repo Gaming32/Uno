@@ -14,9 +14,9 @@ class Game:
     def next_player(self):
         self.ix = (self.ix + self.direction) % len(self.players)
         self.player = self.players[self.ix]
-    def display_message(self, *vals):
+    def display_message(self, *vals, end='\n'):
         for player in self.players:
-            player.doprint(*vals)
+            player.doprint(*vals, end='\n')
     def game_over(self):
         for player in self.players:
             player.end()
@@ -27,7 +27,10 @@ class Game:
 
         old_player = self.player
         self.player = _TempPlayer()
-        self.card.played(self)
+        while True:
+            try: self.card.played(self)
+            except Exception: continue
+            else: break
         self.player = old_player
         del old_player
 
@@ -38,7 +41,7 @@ class Game:
                 self.card = card
                 if card in self.player.hand:
                     self.player.remove_from_hand(card)
-                if not len(self.player.hand): break
+                if not self.player.handfunc('len'): break
                 card.played(self)
                 self.next_player()
 

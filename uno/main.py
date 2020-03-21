@@ -74,6 +74,10 @@ def menu(name, options):
 def exit_callback(): pass
 
 def main():
+    if '-V' in sys.argv or '--version' in sys.argv:
+        from ._mods import __version__
+        print('Uno', __version__)
+        sys.exit()
     try: menu('Main Menu', options)
     except KeyboardInterrupt: pass
     exit_callback()

@@ -2,7 +2,7 @@ import setuptools
 
 setuptools.setup(
     name = 'Uno Game',
-    version = '1.1b9',
+    version = '1.1b10',
     url = 'https://github.com/gaming32/uno',
     author = 'Gaming32',
     author_email = 'gaming32i64@gmail.com',
