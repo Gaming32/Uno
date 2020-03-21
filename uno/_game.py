@@ -16,7 +16,11 @@ class Game:
         self.player = self.players[self.ix]
     def display_message(self, *vals, end='\n'):
         for player in self.players:
-            player.doprint(*vals, end='\n')
+            player.doprint(*vals, end=end)
+    def display_message_to_others(self, *vals, end='\n'):
+        for player in self.players:
+            if player is not self.player:
+                player.doprint(*vals, end=end)
     def game_over(self):
         for player in self.players:
             player.end()
@@ -35,6 +39,7 @@ class Game:
         del old_player
 
         while True:
+            # self.display_message_to_others('Waiting for', self.player.name, 'to play...', end='\r')
             card = self.player.play(self.card, self)
             if card is None: self.next_player()
             else:

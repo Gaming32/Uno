@@ -127,7 +127,7 @@ class RealPlayer(Player):
             return card
     def _ask(self, q, t):
         return input(q)
-    def doprint(self, *vals, end='\n'): print(*vals, end='\n')
+    def doprint(self, *vals, end='\n'): print(*vals, end=end)
 class ComputerPlayer(Player):
     NAMES = [
         'Hal',

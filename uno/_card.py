@@ -15,6 +15,14 @@ class Card:
         return '\u001b[%sm%s\u001b[37m' % (self.color.ansi, self.short_name)
     def __repr__(self):
         return '[%s: %s]' % (self.__class__.__name__, self.long_name)
+    def __eq__(self, other):
+        return (
+            self.short_name == other.short_name and
+            self.number == other.number and
+            self.color == other.color
+        )
+    def __hash__(self):
+        return hash(self.short_name) * 1 + hash(self.number) * 8 + hash(self.color) * 64
 
 class Skip(Card):
     def __init__(self, long_name, color):
