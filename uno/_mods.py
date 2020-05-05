@@ -7,6 +7,8 @@ try: __import__('netsc')
 except ModuleNotFoundError: _failed_libs.append('Network-Script')
 try: from roman import int_to_roman
 except ModuleNotFoundError: _failed_libs.append('Roman-Numerals-Simple')
+try: import colorama
+except ModuleNotFoundError: _failed_libs.append('colorama')
 
 if sys.platform[:3] == 'wi#n':
     import winreg
@@ -51,6 +53,7 @@ if _failed_libs:
             
             import numpy.random as nrandom
             from roman import int_to_roman
+            import colorama
         else: import sys; sys.exit()
     else: raise ImportError('The following libraries were unavailable: %s.' % _libmsg)
 

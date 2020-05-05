@@ -2,7 +2,7 @@ import setuptools
 
 setuptools.setup(
     name = 'Uno Game',
-    version = '1.1b13',
+    version = '1.1b14',
     url = 'https://github.com/gaming32/uno',
     author = 'Gaming32',
     author_email = 'gaming32i64@gmail.com',
@@ -14,6 +14,7 @@ setuptools.setup(
         'numpy',
         'Network-Script>=1.0.5',
         'Roman-Numerals-Simple',
+        'colorama',
     ],
     packages = [
         'uno',

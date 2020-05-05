@@ -74,6 +74,7 @@ def menu(name, options):
 def exit_callback(): pass
 
 def main():
+    colorama.init()
     if '-V' in sys.argv or '--version' in sys.argv:
         from ._mods import __version__
         print('Uno', __version__)
@@ -81,6 +82,7 @@ def main():
     try: menu('Main Menu', options)
     except KeyboardInterrupt: pass
     exit_callback()
+    colorama.deinit()
 
 # __all__ = dir()
 
