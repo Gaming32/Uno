@@ -3,3 +3,6 @@ build
 Uno_Game.egg-info
 Uno_Game_Forge.egg-info
 gui/mods
+uno.build
+target
+*.pyc

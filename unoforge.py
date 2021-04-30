@@ -2,10 +2,14 @@ import uno as _uno
 import uno.main as _unomain
 
 _exit_callbacks = []
+
+
 def register_exit_callback(func):
     _exit_callbacks.append(func)
 
+
 mods = None
+
 
 def add_menu_option(label, func, index=None):
     """Arguments
@@ -20,22 +24,27 @@ index : int, None
         ret = func()
         if ret is not None:
             quitter[0] = bool(ret)
-    opt = (label, func)
+    opt = (label, menu_option)
     if index is None:
         _unomain.options.append(opt)
     else:
         _unomain.options.insert(index, opt)
 
+
 _cards_to_add = set()
+
+
 def add_single_card(card_class):
     card_obj = card_class()
     _uno.CARD_SET.add(card_obj)
     _cards_to_add.add(card_obj)
     return card_obj
 
+
 def menu(name, **opts):
     """Note: OrderedDict recommended for `opts` argument"""
     _unomain.menu(name, list(opts.items()))
+
 
 def add_custom_player_type(label, player_class):
     """`label` is displayed as "How many %s would you like?" Where %s is `label`"""
