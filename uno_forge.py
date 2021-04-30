@@ -4,7 +4,7 @@ import uno
 import uno.main as unomain
 import unoforge
 
-__version__ = '1.0'
+__version__ = '1.1.0'
 __author__ = 'Gaming32'
 
 

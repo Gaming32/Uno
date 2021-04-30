@@ -1,6 +1,6 @@
 from ._init import *
 
-__version__ = '1.1beta'
+__version__ = '1.1.0'
 __author__ = 'Gaming32'
 
 if __name__ == '__main__':
